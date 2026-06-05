@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Supplier-Discovery Agent — demo</title>
+<style>
+  /* Minimal, considered styling: system font, generous whitespace, restrained color. */
+  :root {
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --ink: #1c2230;
+    --muted: #6b7280;
+    --line: #e6e8ec;
+    --accent: #2f6df6;
+    --good: #15803d;
+    --good-bg: #e7f6ec;
+    --warn: #b45309;
+    --warn-bg: #fdf3e3;
+    --bad: #b91c1c;
+    --bad-bg: #fbe9e9;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 80px; }
+  header h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  header p { margin: 0 0 24px; color: var(--muted); font-size: 14px; }
+
+  /* ---- query bar ---- */
+  .askbar { display: flex; gap: 8px; }
+  .askbar input {
+    flex: 1; padding: 13px 15px; font-size: 15px; border: 1px solid var(--line);
+    border-radius: var(--radius); background: var(--panel); color: var(--ink);
+  }
+  .askbar input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+  .askbar button {
+    padding: 0 20px; font-size: 15px; font-weight: 600; color: #fff; background: var(--accent);
+    border: none; border-radius: var(--radius); cursor: pointer;
+  }
+  .askbar button:disabled { opacity: .5; cursor: default; }
+  .examples { margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .examples button {
+    font-size: 12.5px; color: var(--muted); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 12px; cursor: pointer;
+  }
+  .examples button:hover { color: var(--ink); border-color: #cfd3da; }
+
+  .layout { display: grid; grid-template-columns: 270px 1fr; gap: 24px; margin-top: 26px; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px;
+  }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+    margin: 0 0 14px; font-weight: 700; }
+
+  /* ---- weights sliders ---- */
+  .slider-row { margin-bottom: 12px; }
+  .slider-row label { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+  .slider-row input[type=range] { width: 100%; accent-color: var(--accent); }
+  .hint { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+
+  /* ---- spec chips ---- */
+  .spec { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  .chip { font-size: 12px; background: #eef2fb; color: #2547a6; border-radius: 6px; padding: 3px 9px; }
+  .chip.muted { background: #f0f1f4; color: var(--muted); }
+
+  /* ---- pipeline trace ---- */
+  .flow { display: flex; flex-direction: column; gap: 0; }
+  .stage { display: flex; gap: 12px; }
+  .stage .rail { display: flex; flex-direction: column; align-items: center; }
+  .stage .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); margin-top: 5px; }
+  .stage .line { flex: 1; width: 2px; background: var(--line); }
+  .stage:last-child .line { display: none; }
+  .stage .body { padding-bottom: 18px; flex: 1; }
+  .stage .title { font-size: 13.5px; font-weight: 650; }
+  .stage .meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .count { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+  .arrow { color: var(--muted); }
+
+  .dropped { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .dropped .d {
+    font-size: 12.5px; background: var(--bad-bg); border: 1px solid #f3cccc; color: #7a1d1d;
+    border-radius: 8px; padding: 7px 10px;
+  }
+  .dropped .d b { color: var(--bad); }
+  .merge {
+    font-size: 12.5px; background: #eaf6ee; border: 1px solid #cdebd6;
+    color: #1c5733; border-radius: 8px; padding: 7px 10px; margin-top: 6px;
+  }
+
+  /* ---- supplier cards ---- */
+  .cards { display: flex; flex-direction: column; gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+  .card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .card .name { font-size: 16px; font-weight: 680; letter-spacing: -0.01em; }
+  .card .sub { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+  .score { text-align: right; }
+  .score .num { font-size: 22px; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .score .lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+
+  .rationale { font-size: 13.5px; color: #38414f; margin: 11px 0 12px; }
+
+  .bars { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin-bottom: 12px; }
+  @media (max-width: 560px){ .bars { grid-template-columns: 1fr; } }
+  .bar label { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); }
+  .bar .track { height: 6px; background: #eef0f3; border-radius: 4px; overflow: hidden; margin-top: 2px; }
+  .bar .fill { height: 100%; background: var(--accent); border-radius: 4px; }
+  .bar.low .fill { background: var(--bad); }
+
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge {
+    font-size: 12px; border-radius: 7px; padding: 4px 9px; cursor: pointer; border: 1px solid transparent;
+    user-select: none;
+  }
+  .badge.v { background: var(--good-bg); color: var(--good); border-color: #c5e8d0; }
+  .badge.u { background: var(--warn-bg); color: var(--warn); border-color: #f1ddb6; }
+  .badge.x { background: var(--bad-bg); color: var(--bad); border-color: #f3cccc; }
+  .badge .st { opacity: .6; }
+  .cite {
+    margin-top: 8px; font-size: 12.5px; color: #374151; background: #fafbfc;
+    border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px;
+    padding: 9px 11px; display: none;
+  }
+  .cite.open { display: block; }
+  .cite a { color: var(--accent); text-decoration: none; }
+  .cite .src { color: var(--muted); font-size: 11.5px; }
+
+  .empty { color: var(--muted); font-size: 14px; padding: 30px 0; text-align: center; }
+  .loading { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Supplier-Discovery Agent</h1>
+    <p>A find → rank → verify pipeline. Every stage is traced: counts in/out, and the reason each
+       supplier was dropped or demoted. Runs fully offline on ~40 mock suppliers.</p>
+  </header>
+
+  <div class="askbar">
+    <input id="q" type="text" placeholder="Describe what you need…"
+      value="find copper cable suppliers in the EU, ISO 9001 certified, that supply Fortune 500 companies, with no compliance issues" />
+    <button id="go">Search</button>
+  </div>
+  <div class="examples" id="examples"></div>
+
+  <div class="layout">
+    <!-- LEFT: query understanding + weight sliders -->
+    <div>
+      <div class="panel" style="margin-bottom:16px;">
+        <h2>Parsed query spec</h2>
+        <div id="spec"><div class="hint">Run a search to see the extracted spec.</div></div>
+      </div>
+      <div class="panel">
+        <h2>MCDA weights</h2>
+        <div id="sliders"></div>
+        <div class="hint">Adjust to re-rank live. Re-runs <code>/search</code> on release.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: trace + results -->
+    <div>
+      <div class="panel" style="margin-bottom:18px;">
+        <h2>Pipeline trace</h2>
+        <div id="trace"><div class="empty">No run yet.</div></div>
+      </div>
+      <h2 style="font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 12px;">Top 5 suppliers</h2>
+      <div class="cards" id="cards"><div class="empty">Results appear here.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const EXAMPLES = [
+  "find copper cable suppliers in the EU, ISO 9001 certified, that supply Fortune 500 companies, with no compliance issues",
+  "find copper cable suppliers in the EU",
+  "copper cable suppliers in Germany",
+  "copper power cable suppliers in France, ISO 9001 certified",
+];
+const CRITERIA = [
+  ["product_match", "Product match"],
+  ["track_record", "Track record"],
+  ["proximity", "Proximity"],
+  ["financial_health", "Financial"],
+  ["esg_score", "ESG"],
+  ["compliance", "Compliance"],
+];
+const DEFAULT_WEIGHTS = {
+  product_match: 0.35, track_record: 0.20, proximity: 0.10,
+  financial_health: 0.15, esg_score: 0.10, compliance: 0.10,
+};
+
+const $ = (s) => document.querySelector(s);
+
+// ---- build example chips + weight sliders ----
+const exWrap = $("#examples");
+EXAMPLES.forEach((ex) => {
+  const b = document.createElement("button");
+  b.textContent = ex.length > 52 ? ex.slice(0, 52) + "…" : ex;
+  b.title = ex;
+  b.onclick = () => { $("#q").value = ex; run(); };
+  exWrap.appendChild(b);
+});
+
+const sliders = $("#sliders");
+const weightInputs = {};
+CRITERIA.forEach(([key, label]) => {
+  const row = document.createElement("div");
+  row.className = "slider-row";
+  row.innerHTML = `<label><span>${label}</span><span id="w_${key}">${DEFAULT_WEIGHTS[key].toFixed(2)}</span></label>`;
+  const inp = document.createElement("input");
+  inp.type = "range"; inp.min = 0; inp.max = 0.6; inp.step = 0.05; inp.value = DEFAULT_WEIGHTS[key];
+  inp.oninput = () => { $("#w_" + key).textContent = parseFloat(inp.value).toFixed(2); };
+  inp.onchange = () => run();   // re-rank live on release
+  weightInputs[key] = inp;
+  row.appendChild(inp);
+  sliders.appendChild(row);
+});
+
+function currentWeights() {
+  const w = {};
+  CRITERIA.forEach(([k]) => (w[k] = parseFloat(weightInputs[k].value)));
+  return w;
+}
+
+// ---- main search ----
+async function run() {
+  const query = $("#q").value.trim();
+  if (!query) return;
+  $("#go").disabled = true;
+  $("#trace").innerHTML = '<div class="loading">Running pipeline…</div>';
+  try {
+    const res = await fetch("/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, weights: currentWeights() }),
+    });
+    const data = await res.json();
+    renderSpec(data.trace.spec);
+    renderTrace(data.trace);
+    renderCards(data.top);
+  } catch (e) {
+    $("#trace").innerHTML = '<div class="empty">Error: ' + e + "</div>";
+  } finally {
+    $("#go").disabled = false;
+  }
+}
+$("#go").onclick = run;
+$("#q").addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+
+// ---- renderers ----
+function renderSpec(spec) {
+  const chips = [];
+  chips.push(chip(`product: ${spec.product}`));
+  if (spec.location.length) chips.push(chip(`${spec.location.length} countries in scope`));
+  spec.required_certs.forEach((c) => chips.push(chip(`cert: ${c}`)));
+  if (spec.track_record_required) chips.push(chip("Fortune 500 required"));
+  if (spec.compliance_must_pass) chips.push(chip("compliance must pass"));
+  chips.push(chip(`parsed by: ${spec.parsed_by}`, true));
+  $("#spec").innerHTML = `<div class="spec">${chips.join("")}</div>`;
+}
+const chip = (t, muted) => `<span class="chip${muted ? " muted" : ""}">${esc(t)}</span>`;
+
+function renderTrace(trace) {
+  const s = trace.stages;
+  const stageItems = s.map((st) => {
+    return stageRow(
+      titleFor(st.stage),
+      `<span class="count">${st.count_in}</span> <span class="arrow">→</span> <span class="count">${st.count_out}</span> &nbsp; ${esc(st.note)}`
+    );
+  });
+
+  // Entity-resolution merges (data layer) shown up top.
+  let mergeHtml = "";
+  if (trace.merges.length) {
+    mergeHtml = trace.merges.map((m) =>
+      `<div class="merge">🔗 entity resolution merged <b>${m.merged_ids.join(", ")}</b> into
+        <b>${esc(m.golden_name)}</b> (${m.golden_id}) — ${esc(m.reason)}</div>`).join("");
+  }
+
+  // Dropped-with-reason block (the visible point of the demo).
+  let dropHtml = "";
+  if (trace.dropped.length) {
+    dropHtml =
+      '<div class="dropped">' +
+      trace.dropped.map((d) =>
+        `<div class="d">✕ <b>${esc(d.name)}</b> (${d.id}) — ${esc(d.reason)}</div>`).join("") +
+      "</div>";
+  }
+
+  $("#trace").innerHTML =
+    '<div class="flow">' + stageItems.join("") + "</div>" +
+    (mergeHtml ? `<div style="margin-top:12px;">${mergeHtml}</div>` : "") +
+    (dropHtml ? `<div style="margin-top:12px;"><div class="stage-title" style="font-size:12.5px;color:var(--muted);margin-bottom:6px;">Dropped at the gate (${trace.dropped.length})</div>${dropHtml}</div>` : "");
+}
+
+function stageRow(title, meta) {
+  return `<div class="stage"><div class="rail"><div class="dot"></div><div class="line"></div></div>
+    <div class="body"><div class="title">${title}</div><div class="meta">${meta}</div></div></div>`;
+}
+function titleFor(stage) {
+  return ({
+    retrieve: "Find — two retrievers",
+    fuse: "Fuse — reciprocal rank fusion",
+    filter: "Filter — hard-must gate",
+    "score+verify": "Score + Verify — MCDA & citations",
+    "rerank+top": "Rerank → Top 5",
+  })[stage] || stage;
+}
+
+function renderCards(top) {
+  if (!top.length) { $("#cards").innerHTML = '<div class="empty">No suppliers passed the filters.</div>'; return; }
+  $("#cards").innerHTML = top.map(cardHtml).join("");
+}
+
+function cardHtml(c) {
+  const s = c.supplier;
+  const merged = s.merged_from.length
+    ? ` · <span title="collapsed by entity resolution">merged ${s.merged_from.join(", ")}</span>` : "";
+
+  const bars = CRITERIA.map(([key, label]) => {
+    const v = c.criteria[key] ?? 0;
+    const low = v < 0.4 ? " low" : "";
+    return `<div class="bar${low}"><label><span>${label}</span><span>${v.toFixed(2)}</span></label>
+      <div class="track"><div class="fill" style="width:${Math.round(v * 100)}%"></div></div></div>`;
+  }).join("");
+
+  const badges = c.verifications.map((v, i) => {
+    const cls = v.status === "verified" ? "v" : v.status === "unverified" ? "u" : "x";
+    const icon = v.status === "verified" ? "✓" : v.status === "unverified" ? "⚠" : "✕";
+    const stale = v.stale ? ' <span class="st">⌛</span>' : "";
+    const cid = `cite_${s.id}_${i}`;
+    return `<span class="badge ${cls}" onclick="toggle('${cid}')">${icon} ${esc(shortClaim(v.claim))}${stale}</span>`;
+  }).join("");
+
+  const cites = c.verifications.map((v, i) => {
+    const cid = `cite_${s.id}_${i}`;
+    const lv = v.last_verified ? ` · last verified ${v.last_verified}` : "";
+    const staleTxt = v.stale ? " · ⌛ stale" : "";
+    return `<div class="cite" id="${cid}">“${esc(v.snippet)}”<br>
+      <span class="src">${esc(v.source)} · <a href="${esc(v.source_url)}" target="_blank" rel="noopener">source</a>
+       · confidence ${v.confidence.toFixed(2)}${lv}${staleTxt}</span></div>`;
+  }).join("");
+
+  return `<div class="card">
+    <div class="top">
+      <div><div class="name">${esc(s.name)}</div>
+        <div class="sub">${s.country} · ${s.years_active} yrs${merged}</div></div>
+      <div class="score"><div class="num">${(c.composite * 100).toFixed(0)}</div><div class="lbl">composite</div></div>
+    </div>
+    <div class="rationale">${esc(c.rationale)}</div>
+    <div class="bars">${bars}</div>
+    <div class="badges">${badges}</div>
+    ${cites}
+  </div>`;
+}
+
+function shortClaim(claim) {
+  return claim
+    .replace("OFAC sanctions screening", "Sanctions clear")
+    .replace("Supplies Fortune 500 customer: ", "F500: ")
+    .replace(" certification ", " ");
+}
+function toggle(id) { document.getElementById(id).classList.toggle("open"); }
+function esc(t) { return String(t).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
+
+// auto-run the headline demo query on load
+run();
+</script>
+</body>
+</html>

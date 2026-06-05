@@ -1,0 +1,12 @@
+# Render blueprint — one-click deploy. Push this repo to GitHub, then in Render
+# choose "New > Blueprint" and point it at the repo. Free plan, no card required.
+services:
+  - type: web
+    name: supplier-discovery
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
