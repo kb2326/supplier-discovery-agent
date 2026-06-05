@@ -1,0 +1,182 @@
+{
+  "suppliers": [
+    {
+      "id": "ext_001",
+      "name": "Elbe Copper GmbH",
+      "domain": "elbecopper.example",
+      "country": "DE",
+      "city": "Hamburg",
+      "products": [
+        "copper cable",
+        "medium voltage cable",
+        "offshore cable"
+      ],
+      "description": "Hamburg-based specialist in offshore wind cable systems and medium-voltage copper cables for North Sea projects. Emerging player with strong ESG credentials.",
+      "iso_9001": true,
+      "iso_14001": true,
+      "financial_health": 0.78,
+      "esg_score": 0.88,
+      "years_active": 6
+    },
+    {
+      "id": "ext_002",
+      "name": "Vltava Conductors s.r.o.",
+      "domain": "vltava-conductors.example",
+      "country": "CZ",
+      "city": "Brno",
+      "products": [
+        "stranded copper conductor",
+        "copper wire",
+        "bare copper conductor"
+      ],
+      "description": "Czech manufacturer of stranded copper conductors and bare wire for European panel builders and OEMs. Competitive pricing with ISO 9001 certification.",
+      "iso_9001": true,
+      "iso_14001": false,
+      "financial_health": 0.71,
+      "esg_score": 0.65,
+      "years_active": 8
+    },
+    {
+      "id": "ext_003",
+      "name": "Adriatic Cable doo",
+      "domain": "adriaticcable.example",
+      "country": "HR",
+      "city": "Split",
+      "products": [
+        "copper cable",
+        "power cable",
+        "control cable"
+      ],
+      "description": "Croatian copper cable manufacturer serving Adriatic infrastructure projects. Certified for marine and port environments.",
+      "iso_9001": true,
+      "iso_14001": false,
+      "financial_health": 0.67,
+      "esg_score": 0.72,
+      "years_active": 5
+    },
+    {
+      "id": "ext_004",
+      "name": "Silesia Wire SA",
+      "domain": "silesiawire.example",
+      "country": "PL",
+      "city": "Katowice",
+      "products": [
+        "copper wire",
+        "stranded copper conductor",
+        "bare copper conductor"
+      ],
+      "description": "Polish copper wire specialist with large-volume production capacity. Supplies Eastern European automotive and energy sector OEMs.",
+      "iso_9001": true,
+      "iso_14001": true,
+      "financial_health": 0.74,
+      "esg_score": 0.61,
+      "years_active": 9
+    },
+    {
+      "id": "ext_005",
+      "name": "Transdanube Kabel Kft",
+      "domain": "transdanube.example",
+      "country": "HU",
+      "city": "P\u00e9cs",
+      "products": [
+        "copper cable",
+        "control cable"
+      ],
+      "description": "Hungarian startup producing copper control cables for smart grid and industrial automation. Founded 2019, growing rapidly.",
+      "iso_9001": true,
+      "iso_14001": false,
+      "financial_health": 0.62,
+      "esg_score": 0.7,
+      "years_active": 4
+    },
+    {
+      "id": "ext_006",
+      "name": "\u00c9ire Copper Systems Ltd",
+      "domain": "eirecopper.example",
+      "country": "IE",
+      "city": "Cork",
+      "products": [
+        "copper cable",
+        "power cable",
+        "stranded copper conductor"
+      ],
+      "description": "Irish copper cable manufacturer focused on renewable energy connections and offshore wind onshore infrastructure.",
+      "iso_9001": true,
+      "iso_14001": true,
+      "financial_health": 0.76,
+      "esg_score": 0.85,
+      "years_active": 7
+    },
+    {
+      "id": "ext_007",
+      "name": "Kaliningrad Copper OOO",
+      "domain": "kalcopper.example",
+      "country": "RU",
+      "city": "Kaliningrad",
+      "products": [
+        "copper cable",
+        "stranded copper conductor"
+      ],
+      "description": "Russian copper cable producer \u2014 subject to EU trade restrictions. Do not source from this entity.",
+      "iso_9001": false,
+      "iso_14001": false,
+      "financial_health": 0.55,
+      "esg_score": 0.3,
+      "years_active": 18
+    },
+    {
+      "id": "ext_008",
+      "name": "Aegean Copper SA",
+      "domain": "aegeancopper.example",
+      "country": "GR",
+      "city": "Thessaloniki",
+      "products": [
+        "copper cable",
+        "power cable",
+        "bare copper conductor"
+      ],
+      "description": "Greek copper cable and conductor manufacturer serving Balkan energy and construction markets.",
+      "iso_9001": true,
+      "iso_14001": false,
+      "financial_health": 0.65,
+      "esg_score": 0.69,
+      "years_active": 10
+    },
+    {
+      "id": "ext_009",
+      "name": "Galicia Cable SL",
+      "domain": "galiciacable.example",
+      "country": "ES",
+      "city": "Vigo",
+      "products": [
+        "copper cable",
+        "medium voltage cable",
+        "power cable"
+      ],
+      "description": "Spanish medium-voltage copper cable manufacturer with offshore and renewable energy focus. New market entrant 2021.",
+      "iso_9001": true,
+      "iso_14001": true,
+      "financial_health": 0.7,
+      "esg_score": 0.81,
+      "years_active": 3
+    },
+    {
+      "id": "ext_010",
+      "name": "Lodz Copper Works SA",
+      "domain": "lodzcopperwks.example",
+      "country": "PL",
+      "city": "\u0141\u00f3d\u017a",
+      "products": [
+        "copper wire",
+        "bare copper conductor",
+        "stranded copper conductor"
+      ],
+      "description": "Polish copper wire and conductor producer, recently ISO 9001 certified. Cost-competitive for Eastern European and export markets.",
+      "iso_9001": true,
+      "iso_14001": false,
+      "financial_health": 0.69,
+      "esg_score": 0.63,
+      "years_active": 5
+    }
+  ]
+}

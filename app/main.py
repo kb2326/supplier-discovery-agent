@@ -1,41 +1,53 @@
-"""FastAPI app — the /search endpoint + the single-page frontend.
-
-Thin transport layer over pipeline.run_search. The store (with entity resolution
-already applied) is loaded ONCE at startup and reused across requests.
-"""
 from __future__ import annotations
-
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from .pipeline import run_search
-from .schemas import Result
-from .store import load_store
-
-app = FastAPI(title="Supplier-Discovery Agent (demo)")
-
-# Resolve the golden store once. Cheap, in-memory, no DB.
-STORE = load_store()
-
-STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+STATIC   = Path(__file__).resolve().parent.parent / "static"
 
 
-class SearchRequest(BaseModel):
-    query: str
-    # Optional per-criterion weight overrides from the UI sliders. Omitted -> defaults.
-    weights: dict[str, float] | None = None
+def _setup_if_needed() -> None:
+    """Build data stores on first boot (Railway / any fresh environment)."""
+    if not (DATA_DIR / "suppliers.db").exists():
+        print("Data stores not found — building now…")
+        from .data_setup import (
+            _load_seed, create_sql_db, create_vector_store,
+            create_graph, create_external_api_data,
+        )
+        suppliers = _load_seed()
+        create_sql_db(suppliers)
+        create_vector_store(suppliers)
+        create_graph(suppliers)
+        create_external_api_data()
+        print("Data stores ready.")
 
 
-@app.post("/search", response_model=Result)
-def search(req: SearchRequest) -> Result:
-    """Run the full find -> rank -> verify pipeline and return the result + trace."""
-    return run_search(req.query, STORE, weights=req.weights)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _setup_if_needed()
+    yield
+
+
+from .agent import run_agent   # noqa: E402 — import after setup guard
+
+app = FastAPI(title="Supplier Discovery Agent", lifespan=lifespan)
+
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list[dict[str, Any]] = []
+
+
+@app.post("/chat")
+def chat(req: ChatRequest) -> dict:
+    return run_agent(req.message, req.history)
 
 
 @app.get("/")
 def index() -> FileResponse:
-    """Serve the single-page UI."""
-    return FileResponse(STATIC_DIR / "index.html")
+    return FileResponse(STATIC / "chat.html")

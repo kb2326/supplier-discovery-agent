@@ -4,3 +4,8 @@ __pycache__/
 .claude/
 .DS_Store
 *.log
+.firecrawl/
+# generated at startup — not committed
+data/suppliers.db
+data/vector_store.pkl
+data/supplier_graph.pkl

@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 420" width="740" height="420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+
+  <!-- background -->
+  <rect width="740" height="420" fill="#0f1117" rx="14"/>
+
+  <!-- title -->
+  <text x="370" y="36" text-anchor="middle" font-size="15" font-weight="700" fill="#e8eaf0">Supplier Discovery Agent — Routing Architecture</text>
+
+  <!-- USER QUERY box -->
+  <rect x="270" y="56" width="200" height="48" rx="8" fill="#1a1d27" stroke="#2a2d3a" stroke-width="1.5"/>
+  <text x="370" y="76" text-anchor="middle" font-size="12" font-weight="600" fill="#e8eaf0">User Query</text>
+  <text x="370" y="94" text-anchor="middle" font-size="10.5" fill="#6b7280">"find copper cable suppliers in Germany…"</text>
+
+  <!-- arrow down to agent -->
+  <line x1="370" y1="104" x2="370" y2="128" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- AGENT box -->
+  <rect x="220" y="128" width="300" height="52" rx="8" fill="#1a2a4a" stroke="#4f8ef7" stroke-width="1.5"/>
+  <text x="370" y="149" text-anchor="middle" font-size="13" font-weight="700" fill="#4f8ef7">LLM Orchestrator (Claude)</text>
+  <text x="370" y="168" text-anchor="middle" font-size="10.5" fill="#93b4f5">reads query → decides which sources to activate</text>
+
+  <!-- 4 arrows down to sources -->
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M1 1L9 5L1 9" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arr-blue"   viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arr-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arr-green"  viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arr-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+    <marker id="arr-gray"   viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  </defs>
+
+  <line x1="280" y1="180" x2="100" y2="224" stroke="#3b82f6"  stroke-width="1.5" marker-end="url(#arr-blue)"   stroke-dasharray="5 3"/>
+  <line x1="330" y1="180" x2="260" y2="224" stroke="#8b5cf6"  stroke-width="1.5" marker-end="url(#arr-purple)" stroke-dasharray="5 3"/>
+  <line x1="410" y1="180" x2="480" y2="224" stroke="#10b981"  stroke-width="1.5" marker-end="url(#arr-green)"  stroke-dasharray="5 3"/>
+  <line x1="460" y1="180" x2="630" y2="224" stroke="#f59e0b"  stroke-width="1.5" marker-end="url(#arr-orange)" stroke-dasharray="5 3"/>
+
+  <!-- SQL box -->
+  <rect x="30"  y="224" width="148" height="88" rx="8" fill="#0d1f3c" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="104" y="248" text-anchor="middle" font-size="12"   font-weight="700" fill="#3b82f6">SQL</text>
+  <text x="104" y="264" text-anchor="middle" font-size="10"   fill="#93b4f5">Structured table</text>
+  <text x="104" y="281" text-anchor="middle" font-size="9.5"  fill="#6b7280">Country · Certifications</text>
+  <text x="104" y="295" text-anchor="middle" font-size="9.5"  fill="#6b7280">Employees · ESG · Revenue</text>
+  <text x="104" y="309" text-anchor="middle" font-size="9"    fill="#4b6a9b" font-style="italic">hard exact filters</text>
+
+  <!-- Vector box -->
+  <rect x="192" y="224" width="148" height="88" rx="8" fill="#1a0f3c" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="266" y="248" text-anchor="middle" font-size="12"   font-weight="700" fill="#8b5cf6">Vector</text>
+  <text x="266" y="264" text-anchor="middle" font-size="10"   fill="#b3a4e8">Capability descriptions</text>
+  <text x="266" y="281" text-anchor="middle" font-size="9.5"  fill="#6b7280">Semantic · Synonyms</text>
+  <text x="266" y="295" text-anchor="middle" font-size="9.5"  fill="#6b7280">Product capability text</text>
+  <text x="266" y="309" text-anchor="middle" font-size="9"    fill="#5a4a8a" font-style="italic">fuzzy similarity search</text>
+
+  <!-- Graph box -->
+  <rect x="354" y="224" width="148" height="88" rx="8" fill="#0a2318" stroke="#10b981" stroke-width="1.5"/>
+  <text x="428" y="248" text-anchor="middle" font-size="12"   font-weight="700" fill="#10b981">Graph</text>
+  <text x="428" y="264" text-anchor="middle" font-size="10"   fill="#6ee7b7">Knowledge graph</text>
+  <text x="428" y="281" text-anchor="middle" font-size="9.5"  fill="#6b7280">Supplier → Customer</text>
+  <text x="428" y="295" text-anchor="middle" font-size="9.5"  fill="#6b7280">Ownership · Sanctions</text>
+  <text x="428" y="309" text-anchor="middle" font-size="9"    fill="#2a6a4a" font-style="italic">relationship traversal</text>
+
+  <!-- External API box -->
+  <rect x="516" y="224" width="148" height="88" rx="8" fill="#2a1500" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="590" y="248" text-anchor="middle" font-size="12"   font-weight="700" fill="#f59e0b">External API</text>
+  <text x="590" y="264" text-anchor="middle" font-size="10"   fill="#fcd34d">Live external data</text>
+  <text x="590" y="281" text-anchor="middle" font-size="9.5"  fill="#6b7280">Veridion · D&amp;B · GLEIF</text>
+  <text x="590" y="295" text-anchor="middle" font-size="9.5"  fill="#6b7280">OFAC · IAF Certs</text>
+  <text x="590" y="309" text-anchor="middle" font-size="9"    fill="#7a5010" font-style="italic">new / fresh suppliers</text>
+
+  <!-- arrows up from sources to results -->
+  <line x1="104" y1="312" x2="250" y2="352" stroke="#6b7280" stroke-width="1.2" marker-end="url(#arr-gray)"/>
+  <line x1="266" y1="312" x2="310" y2="352" stroke="#6b7280" stroke-width="1.2" marker-end="url(#arr-gray)"/>
+  <line x1="428" y1="312" x2="420" y2="352" stroke="#6b7280" stroke-width="1.2" marker-end="url(#arr-gray)"/>
+  <line x1="590" y1="312" x2="500" y2="352" stroke="#6b7280" stroke-width="1.2" marker-end="url(#arr-gray)"/>
+
+  <!-- RESULTS box -->
+  <rect x="200" y="352" width="340" height="48" rx="8" fill="#1a2710" stroke="#10b981" stroke-width="1.5"/>
+  <text x="370" y="372" text-anchor="middle" font-size="12" font-weight="700" fill="#6ee7b7">Merged · Ranked · Cited Response</text>
+  <text x="370" y="390" text-anchor="middle" font-size="10.5" fill="#6b7280">sources attributed · risk flags · confidence scores</text>
+
+  <!-- RRF label on merge arrows -->
+  <text x="370" y="347" text-anchor="middle" font-size="9" fill="#444" font-style="italic">RRF fusion + LLM synthesis</text>
+
+</svg>

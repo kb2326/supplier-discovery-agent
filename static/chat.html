@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Supplier Agent — Agentic Chat</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+    --ink: #e8eaf0; --muted: #6b7280; --accent: #4f8ef7;
+    --sql: #3b82f6; --vec: #8b5cf6; --graph: #10b981; --api: #f59e0b;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; height: 100dvh; display: flex; flex-direction: column; }
+
+  /* ── header ── */
+  header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  header .title { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+  header .subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  header a { font-size: 12px; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; }
+  header a:hover { color: var(--ink); }
+
+  /* ── source legend ── */
+  .legend {
+    display: flex; gap: 16px; padding: 10px 20px; border-bottom: 1px solid var(--border);
+    font-size: 11.5px; flex-shrink: 0; flex-wrap: wrap;
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.sql { background: var(--sql); }
+  .dot.vec { background: var(--vec); }
+  .dot.graph { background: var(--graph); }
+  .dot.api { background: var(--api); }
+
+  /* ── messages ── */
+  .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+
+  .msg { display: flex; gap: 10px; max-width: 820px; }
+  .msg.user { flex-direction: row-reverse; align-self: flex-end; }
+  .msg.assistant { align-self: flex-start; }
+
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+  .msg.user .avatar { background: var(--accent); color: #fff; }
+  .msg.assistant .avatar { background: var(--surface); border: 1px solid var(--border); }
+
+  .bubble {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 15px; font-size: 13.5px; line-height: 1.6;
+    max-width: 680px; white-space: pre-wrap; word-break: break-word;
+  }
+  .msg.user .bubble { background: #1e2a4a; border-color: #2a3d6a; }
+
+  /* ── tool trace ── */
+  .trace {
+    margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px;
+    max-width: 680px;
+  }
+  .tool-chip {
+    font-size: 11px; border-radius: 20px; padding: 3px 10px;
+    border: 1px solid; font-weight: 600; display: flex; align-items: center; gap: 4px;
+  }
+  .tool-chip.SQL        { color: var(--sql);   border-color: var(--sql);   background: #1a2a4a; }
+  .tool-chip.Vector     { color: var(--vec);   border-color: var(--vec);   background: #1e1a3a; }
+  .tool-chip.Graph      { color: var(--graph); border-color: var(--graph); background: #0f2a20; }
+  .tool-chip.api        { color: var(--api);   border-color: var(--api);   background: #2a1f0a; }
+  .tool-chip.SQL::before    { content: "⬛"; font-size: 8px; }
+  .tool-chip.Vector::before { content: "◆"; font-size: 8px; }
+  .tool-chip.Graph::before  { content: "⬡"; font-size: 8px; }
+  .tool-chip.api::before    { content: "◎"; font-size: 8px; }
+
+  /* ── examples ── */
+  .examples-wrap {
+    padding: 10px 20px 6px; border-bottom: 1px solid var(--border);
+    display: flex; gap: 7px; flex-wrap: wrap; flex-shrink: 0;
+  }
+  .ex-btn {
+    font-size: 11.5px; color: var(--muted); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 20px; padding: 4px 11px;
+    cursor: pointer; white-space: nowrap;
+  }
+  .ex-btn:hover { color: var(--ink); border-color: #44475a; }
+
+  /* ── input bar ── */
+  .input-bar {
+    padding: 14px 20px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; flex-shrink: 0;
+  }
+  .input-bar textarea {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--ink); font-size: 14px;
+    padding: 10px 14px; resize: none; outline: none; font-family: inherit; line-height: 1.4;
+    max-height: 120px;
+  }
+  .input-bar textarea:focus { border-color: var(--accent); }
+  .input-bar button {
+    background: var(--accent); color: #fff; border: none;
+    border-radius: var(--radius); padding: 0 20px; font-size: 14px;
+    font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .input-bar button:disabled { opacity: .4; cursor: default; }
+
+  /* ── typing indicator ── */
+  .typing { display: flex; gap: 4px; padding: 6px 0; }
+  .typing span {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--muted);
+    animation: bounce .9s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: .15s; }
+  .typing span:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+  /* markdown helpers */
+  .bubble b, .bubble strong { font-weight: 700; color: #c5d0e8; }
+  .bubble em { color: var(--muted); }
+
+  .sources-label { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 10px; color: var(--muted); text-align: center;
+    padding: 40px;
+  }
+  .empty-state .icon { font-size: 36px; }
+  .empty-state h3 { font-size: 16px; color: var(--ink); }
+  .empty-state p { font-size: 13px; max-width: 400px; line-height: 1.6; }
+
+  /* ── architecture toggle ── */
+  .arch-toggle {
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .arch-toggle summary {
+    padding: 8px 20px; font-size: 12px; font-weight: 600; color: var(--muted);
+    cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px;
+    user-select: none;
+  }
+  .arch-toggle summary::-webkit-details-marker { display: none; }
+  .arch-toggle summary::before { content: "▸"; font-size: 10px; }
+  .arch-toggle[open] summary::before { content: "▾"; }
+  .arch-toggle summary:hover { color: var(--ink); }
+  .arch-body {
+    padding: 16px 20px 20px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .arch-body svg { width: 100%; max-width: 740px; display: block; margin: 0 auto; border-radius: 8px; }
+
+  /* ── data sources panel ── */
+  .data-toggle { border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .data-toggle summary {
+    padding: 8px 20px; font-size: 12px; font-weight: 600; color: var(--muted);
+    cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; user-select: none;
+  }
+  .data-toggle summary::-webkit-details-marker { display: none; }
+  .data-toggle summary::before { content: "▸"; font-size: 10px; }
+  .data-toggle[open] summary::before { content: "▾"; }
+  .data-toggle summary:hover { color: var(--ink); }
+  .data-body { background: var(--surface); border-top: 1px solid var(--border); padding: 14px 20px 18px; }
+
+  .data-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .dtab {
+    font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 20px;
+    border: 1px solid; background: transparent; cursor: pointer; opacity: 0.45; transition: opacity .15s;
+  }
+  .dtab.active { opacity: 1; }
+  .dtab:hover { opacity: 0.8; }
+
+  .dpanel { display: none; }
+  .dpanel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 700px) { .dpanel.active { grid-template-columns: 1fr; } }
+
+  .dcol-label {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    margin-bottom: 7px; display: flex; align-items: center; gap: 6px;
+  }
+  .dcol-label .badge-mock { color: var(--muted); }
+  .dcol-label .badge-real { color: #f59e0b; }
+  pre.dsnip {
+    font-size: 11px; line-height: 1.55; background: #0a0c12; border: 1px solid var(--border);
+    border-radius: 8px; padding: 11px 13px; overflow-x: auto; color: #b8c0d0; margin: 0;
+    font-family: "SF Mono", "Fira Code", Menlo, monospace; white-space: pre;
+  }
+  pre.dsnip .k  { color: #8b5cf6; }  /* key */
+  pre.dsnip .s  { color: #6ee7b7; }  /* string */
+  pre.dsnip .n  { color: #fbbf24; }  /* number */
+  pre.dsnip .c  { color: #6b7280; font-style: italic; }  /* comment */
+  pre.dsnip .kw { color: #f472b6; }  /* keyword */
+  pre.dsnip .e  { color: #f87171; }  /* edge/arrow */
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="title">Supplier Agent — Agentic Multi-Source Search</div>
+    <div class="subtitle">Routes each query to the right data store: SQL · Vector · Graph · External API</div>
+  </div>
+  <a href="/">← Pipeline demo</a>
+</header>
+
+<div class="legend">
+  <span><span class="dot sql"></span> SQL — structured filters (country, certs, employees)</span>
+  <span><span class="dot vec"></span> Vector — semantic capability search</span>
+  <span><span class="dot graph"></span> Graph — relationships &amp; ownership chains</span>
+  <span><span class="dot api"></span> External API — live external discovery</span>
+</div>
+
+<div class="examples-wrap" id="examples"></div>
+
+<!-- Architecture diagram — collapsible -->
+<details class="arch-toggle">
+  <summary>Architecture — how the agent routes queries (click to expand)</summary>
+  <div class="arch-body">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 420" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+      <rect width="740" height="420" fill="#0f1117" rx="14"/>
+      <text x="370" y="36" text-anchor="middle" font-size="15" font-weight="700" fill="#e8eaf0">Supplier Discovery Agent — Routing Architecture</text>
+
+      <!-- User query -->
+      <rect x="270" y="56" width="200" height="48" rx="8" fill="#1a1d27" stroke="#2a2d3a" stroke-width="1.5"/>
+      <text x="370" y="76" text-anchor="middle" font-size="12" font-weight="600" fill="#e8eaf0">User Query</text>
+      <text x="370" y="94" text-anchor="middle" font-size="10.5" fill="#6b7280">"find copper cable suppliers in Germany…"</text>
+
+      <line x1="370" y1="104" x2="370" y2="128" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#a0)"/>
+
+      <!-- Agent -->
+      <rect x="220" y="128" width="300" height="52" rx="8" fill="#1a2a4a" stroke="#4f8ef7" stroke-width="1.5"/>
+      <text x="370" y="149" text-anchor="middle" font-size="13" font-weight="700" fill="#4f8ef7">LLM Orchestrator (Claude)</text>
+      <text x="370" y="168" text-anchor="middle" font-size="10.5" fill="#93b4f5">reads query → decides which sources to activate</text>
+
+      <defs>
+        <marker id="a0" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#4f8ef7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+        <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#3b82f6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+        <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+        <marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+        <marker id="a4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+        <marker id="a5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1L9 5L1 9" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+      </defs>
+
+      <!-- Branching arrows -->
+      <line x1="280" y1="180" x2="100" y2="224" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#a1)" stroke-dasharray="5 3"/>
+      <line x1="330" y1="180" x2="260" y2="224" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#a2)" stroke-dasharray="5 3"/>
+      <line x1="410" y1="180" x2="480" y2="224" stroke="#10b981" stroke-width="1.5" marker-end="url(#a3)" stroke-dasharray="5 3"/>
+      <line x1="460" y1="180" x2="630" y2="224" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#a4)" stroke-dasharray="5 3"/>
+
+      <!-- SQL -->
+      <rect x="30"  y="224" width="148" height="88" rx="8" fill="#0d1f3c" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="104" y="248" text-anchor="middle" font-size="12" font-weight="700" fill="#3b82f6">SQL</text>
+      <text x="104" y="264" text-anchor="middle" font-size="10" fill="#93b4f5">Structured table</text>
+      <text x="104" y="281" text-anchor="middle" font-size="9.5" fill="#6b7280">Country · Certifications</text>
+      <text x="104" y="295" text-anchor="middle" font-size="9.5" fill="#6b7280">Employees · ESG · Revenue</text>
+      <text x="104" y="309" text-anchor="middle" font-size="9" fill="#4b6a9b" font-style="italic">hard exact filters</text>
+
+      <!-- Vector -->
+      <rect x="192" y="224" width="148" height="88" rx="8" fill="#1a0f3c" stroke="#8b5cf6" stroke-width="1.5"/>
+      <text x="266" y="248" text-anchor="middle" font-size="12" font-weight="700" fill="#8b5cf6">Vector</text>
+      <text x="266" y="264" text-anchor="middle" font-size="10" fill="#b3a4e8">Capability descriptions</text>
+      <text x="266" y="281" text-anchor="middle" font-size="9.5" fill="#6b7280">Semantic · Synonyms</text>
+      <text x="266" y="295" text-anchor="middle" font-size="9.5" fill="#6b7280">Product capability text</text>
+      <text x="266" y="309" text-anchor="middle" font-size="9" fill="#5a4a8a" font-style="italic">fuzzy similarity search</text>
+
+      <!-- Graph -->
+      <rect x="354" y="224" width="148" height="88" rx="8" fill="#0a2318" stroke="#10b981" stroke-width="1.5"/>
+      <text x="428" y="248" text-anchor="middle" font-size="12" font-weight="700" fill="#10b981">Graph</text>
+      <text x="428" y="264" text-anchor="middle" font-size="10" fill="#6ee7b7">Knowledge graph</text>
+      <text x="428" y="281" text-anchor="middle" font-size="9.5" fill="#6b7280">Supplier → Customer</text>
+      <text x="428" y="295" text-anchor="middle" font-size="9.5" fill="#6b7280">Ownership · Sanctions</text>
+      <text x="428" y="309" text-anchor="middle" font-size="9" fill="#2a6a4a" font-style="italic">relationship traversal</text>
+
+      <!-- External API -->
+      <rect x="516" y="224" width="148" height="88" rx="8" fill="#2a1500" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="590" y="248" text-anchor="middle" font-size="12" font-weight="700" fill="#f59e0b">External API</text>
+      <text x="590" y="264" text-anchor="middle" font-size="10" fill="#fcd34d">Live external data</text>
+      <text x="590" y="281" text-anchor="middle" font-size="9.5" fill="#6b7280">Veridion · D&amp;B · GLEIF</text>
+      <text x="590" y="295" text-anchor="middle" font-size="9.5" fill="#6b7280">OFAC · IAF Certs</text>
+      <text x="590" y="309" text-anchor="middle" font-size="9" fill="#7a5010" font-style="italic">new / fresh suppliers</text>
+
+      <!-- Merge arrows -->
+      <line x1="104" y1="312" x2="250" y2="352" stroke="#6b7280" stroke-width="1.2" marker-end="url(#a5)"/>
+      <line x1="266" y1="312" x2="310" y2="352" stroke="#6b7280" stroke-width="1.2" marker-end="url(#a5)"/>
+      <line x1="428" y1="312" x2="420" y2="352" stroke="#6b7280" stroke-width="1.2" marker-end="url(#a5)"/>
+      <line x1="590" y1="312" x2="500" y2="352" stroke="#6b7280" stroke-width="1.2" marker-end="url(#a5)"/>
+      <text x="370" y="347" text-anchor="middle" font-size="9" fill="#555" font-style="italic">RRF fusion + LLM synthesis</text>
+
+      <!-- Result -->
+      <rect x="200" y="352" width="340" height="48" rx="8" fill="#1a2710" stroke="#10b981" stroke-width="1.5"/>
+      <text x="370" y="372" text-anchor="middle" font-size="12" font-weight="700" fill="#6ee7b7">Merged · Ranked · Cited Response</text>
+      <text x="370" y="390" text-anchor="middle" font-size="10.5" fill="#6b7280">sources attributed · risk flags · confidence scores</text>
+    </svg>
+  </div>
+</details>
+
+<!-- Data Sources panel -->
+<details class="data-toggle">
+  <summary>Data sources — what each store holds vs. real-world equivalent (click to expand)</summary>
+  <div class="data-body">
+
+    <div class="data-tabs">
+      <button class="dtab active" style="color:#3b82f6;border-color:#3b82f6" onclick="switchTab('sql')">SQL</button>
+      <button class="dtab"        style="color:#8b5cf6;border-color:#8b5cf6" onclick="switchTab('vec')">Vector</button>
+      <button class="dtab"        style="color:#10b981;border-color:#10b981" onclick="switchTab('gph')">Graph</button>
+      <button class="dtab"        style="color:#f59e0b;border-color:#f59e0b" onclick="switchTab('api')">External API</button>
+    </div>
+
+    <!-- SQL -->
+    <div id="dpanel-sql" class="dpanel active">
+      <div>
+        <div class="dcol-label"><span class="badge-mock">● Our mock — SQLite table row</span></div>
+        <pre class="dsnip">{
+  <span class="k">"id"</span>:                  <span class="s">"sup_002"</span>,
+  <span class="k">"name"</span>:                <span class="s">"Rheinland Kupferkabel GmbH"</span>,
+  <span class="k">"country"</span>:             <span class="s">"DE"</span>,  <span class="c">// ISO-2</span>
+  <span class="k">"city"</span>:               <span class="s">"Cologne"</span>,
+  <span class="k">"employees"</span>:          <span class="n">820</span>,
+  <span class="k">"annual_revenue_usd"</span>: <span class="n">210000000</span>,
+  <span class="k">"iso_9001"</span>:           <span class="n">1</span>,
+  <span class="k">"iso_14001"</span>:          <span class="n">0</span>,
+  <span class="k">"financial_health"</span>:   <span class="n">0.88</span>,  <span class="c">// 0–1 mock score</span>
+  <span class="k">"esg_score"</span>:          <span class="n">0.79</span>,
+  <span class="k">"years_active"</span>:       <span class="n">24</span>,
+  <span class="k">"sanctions_flag"</span>:     <span class="n">0</span>
+}</pre>
+      </div>
+      <div>
+        <div class="dcol-label"><span class="badge-real">⚡ Real world — D&amp;B Direct+ match response</span></div>
+        <pre class="dsnip">{
+  <span class="k">"organization"</span>: {
+    <span class="k">"duns"</span>:         <span class="s">"338560867"</span>,
+    <span class="k">"primaryName"</span>:  <span class="s">"Prysmian Cables Germany GmbH"</span>,
+    <span class="k">"countryISOAlpha2Code"</span>: <span class="s">"DE"</span>,
+    <span class="k">"numberOfEmployees"</span>: [{ <span class="k">"value"</span>: <span class="n">1200</span> }],
+    <span class="k">"financials"</span>: [{
+      <span class="k">"salesRevenue"</span>: { <span class="k">"value"</span>: <span class="n">380000000</span> }
+    }]
+  },
+  <span class="k">"matchQuality"</span>: {
+    <span class="k">"confidenceCode"</span>: <span class="n">9</span>,   <span class="c">// 1–10, 10 = best</span>
+    <span class="k">"matchGrade"</span>:     <span class="s">"AAAAAZ"</span>,
+    <span class="k">"nameMatchScore"</span>: <span class="n">94</span>   <span class="c">// 0–100</span>
+  }
+}</pre>
+      </div>
+    </div>
+
+    <!-- Vector -->
+    <div id="dpanel-vec" class="dpanel">
+      <div>
+        <div class="dcol-label"><span class="badge-mock">● Our mock — TF-IDF sparse matrix (NOT a real vector DB)</span></div>
+        <pre class="dsnip"><span class="c">// TF-IDF: text → sparse word-frequency scores
+// Only non-zero word weights stored per doc</span>
+
+{
+  <span class="k">"id"</span>: <span class="s">"sup_002"</span>,
+  <span class="k">"name"</span>: <span class="s">"Rheinland Kupferkabel GmbH"</span>,
+  <span class="k">"sparse_vector"</span>: {
+    <span class="s">"copper"</span>:     <span class="n">0.41</span>,
+    <span class="s">"cable"</span>:      <span class="n">0.38</span>,
+    <span class="s">"medium"</span>:     <span class="n">0.29</span>,
+    <span class="s">"voltage"</span>:    <span class="n">0.29</span>,
+    <span class="s">"utility"</span>:    <span class="n">0.22</span>,
+    <span class="s">"conductor"</span>:  <span class="n">0.19</span>,
+    <span class="c">// ... ~4000 vocab dimensions, mostly 0</span>
+  }
+}
+
+<span class="c">// Query "offshore wind copper cable"
+// → cosine similarity: 0.31
+// Works on keyword overlap only —
+// misses synonyms, context, meaning</span></pre>
+      </div>
+      <div>
+        <div class="dcol-label"><span class="badge-real">⚡ Real vector DB — dense embedding (pgvector / Qdrant)</span></div>
+        <pre class="dsnip"><span class="c">// sentence-transformers encodes text
+// into 768 floats capturing semantic meaning</span>
+
+{
+  <span class="k">"id"</span>: <span class="s">"sup_002"</span>,
+  <span class="k">"dense_vector"</span>: [
+    <span class="n">0.023</span>, <span class="n">-0.117</span>, <span class="n">0.834</span>, <span class="n">0.291</span>,
+    <span class="n">-0.445</span>, <span class="n">0.612</span>, <span class="n">0.078</span>, <span class="n">-0.334</span>,
+    <span class="c">// ... 768 floats total</span>
+  ],
+  <span class="k">"payload"</span>: {
+    <span class="k">"name"</span>:        <span class="s">"Rheinland Kupferkabel GmbH"</span>,
+    <span class="k">"country"</span>:     <span class="s">"DE"</span>,
+    <span class="k">"description"</span>: <span class="s">"High-volume copper cable..."</span>
+  }
+}
+
+<span class="c">// Query "offshore wind copper cable"
+// → also encodes to 768 floats
+// → cosine similarity across ALL 768 dims
+// → finds "submarine cable", "subsea
+//    power cable" even without exact words
+// This is what production uses</span></pre>
+      </div>
+    </div>
+
+    <!-- Graph -->
+    <div id="dpanel-gph" class="dpanel">
+      <div>
+        <div class="dcol-label"><span class="badge-mock">● Our mock — NetworkX edges (Python)</span></div>
+        <pre class="dsnip"><span class="c">// Supplier → Customer edges</span>
+<span class="e">(sup_002)</span> <span class="kw">─[SUPPLIES_TO]─►</span> <span class="s">"Siemens"</span>
+<span class="e">(sup_002)</span> <span class="kw">─[SUPPLIES_TO]─►</span> <span class="s">"BASF"</span>
+<span class="e">(sup_002)</span> <span class="kw">─[CERTIFIED_BY]─►</span> <span class="s">"TÜV Rheinland"</span>
+
+<span class="c">// Ownership + sanctions risk</span>
+<span class="e">"GlobalCopper Holdings BV"</span>
+  <span class="kw">─[OWNS]─►</span> <span class="e">(sup_007)</span> <span class="s">"Adria Copper Trading Ltd"</span>
+  <span class="kw">─[OWNS]─►</span> <span class="e">(sup_017)</span> <span class="s">"Shenzhen Copper Conductors"</span>
+
+<span class="c">// sanctions_flag: true on parent node
+// → both child suppliers flagged as risk</span>
+
+<span class="c">// Query: traverse_graph("risk_connections")
+// → returns sup_007, sup_017</span></pre>
+      </div>
+      <div>
+        <div class="dcol-label"><span class="badge-real">⚡ Real world — Neo4j Cypher query</span></div>
+        <pre class="dsnip"><span class="c">// Find all suppliers of Siemens + their risk</span>
+<span class="kw">MATCH</span> (s:Supplier)
+  <span class="kw">-[:SUPPLIES_TO]─►</span>
+  (c:Company { name: <span class="s">"Siemens"</span> })
+<span class="kw">OPTIONAL MATCH</span>
+  (p:ParentCo)<span class="kw">-[:OWNS]─►</span>(s)
+<span class="kw">OPTIONAL MATCH</span>
+  (s)<span class="kw">-[:CERTIFIED_BY]─►</span>(cb:CertBody)
+<span class="kw">RETURN</span>
+  s.name, s.country,
+  p.name       <span class="kw">AS</span> parent,
+  p.ofac_hit   <span class="kw">AS</span> sanctions_risk,
+  cb.name      <span class="kw">AS</span> cert_body
+<span class="kw">ORDER BY</span> s.financial_health <span class="kw">DESC</span>
+
+<span class="c">// Real data: GLEIF LEI for ownership chain
+// OFAC API for sanctions screening</span></pre>
+      </div>
+    </div>
+
+    <!-- External API -->
+    <div id="dpanel-api" class="dpanel">
+      <div>
+        <div class="dcol-label"><span class="badge-mock">● Our mock — local JSON (simulated API)</span></div>
+        <pre class="dsnip">{
+  <span class="k">"id"</span>:           <span class="s">"ext_001"</span>,
+  <span class="k">"name"</span>:         <span class="s">"Elbe Copper GmbH"</span>,
+  <span class="k">"country"</span>:      <span class="s">"DE"</span>,
+  <span class="k">"city"</span>:         <span class="s">"Hamburg"</span>,
+  <span class="k">"products"</span>: [
+    <span class="s">"copper cable"</span>,
+    <span class="s">"medium voltage cable"</span>,
+    <span class="s">"offshore cable"</span>
+  ],
+  <span class="k">"description"</span>:  <span class="s">"Hamburg-based specialist
+    in offshore wind cable systems..."</span>,
+  <span class="k">"iso_9001"</span>:     <span class="kw">true</span>,
+  <span class="k">"esg_score"</span>:    <span class="n">0.88</span>,
+  <span class="k">"confidence"</span>:   <span class="n">0.87</span>,  <span class="c">// computed locally</span>
+  <span class="k">"source_url"</span>:   <span class="s">"https://elbecopper.example"</span>
+}</pre>
+      </div>
+      <div>
+        <div class="dcol-label"><span class="badge-real">⚡ Real world — Veridion Search API response</span></div>
+        <pre class="dsnip">{
+  <span class="k">"company_name"</span>:    <span class="s">"Hellenic Cables S.A."</span>,
+  <span class="k">"company_country"</span>: <span class="s">"GR"</span>,
+  <span class="k">"company_city"</span>:    <span class="s">"Athens"</span>,
+  <span class="k">"company_products"</span>: [
+    <span class="s">"submarine cable"</span>,
+    <span class="s">"copper power cable"</span>
+  ],
+  <span class="k">"search_details"</span>: {
+    <span class="k">"product_match"</span>: {
+      <span class="k">"headline"</span>: <span class="s">"Offshore cable manufacturer"</span>,
+      <span class="k">"url"</span>: <span class="s">"https://helcables.com"</span>,
+      <span class="k">"snippets"</span>: [<span class="s">"Hellenic Cables supplies
+        submarine copper cables for
+        Mediterranean wind projects..."</span>]
+    }
+  },
+  <span class="k">"strictness"</span>: { <span class="k">"company_products"</span>: <span class="s">"partial"</span> },
+  <span class="k">"company_founded_year"</span>: <span class="n">1950</span>,
+  <span class="c">// 134M+ companies, weekly refresh</span>
+  <span class="c">// evidence-grounded, not self-reported</span>
+}</pre>
+      </div>
+    </div>
+
+  </div>
+</details>
+
+<div class="messages" id="messages">
+  <div class="empty-state" id="emptyState">
+    <div class="icon">🔍</div>
+    <h3>Ask anything about suppliers</h3>
+    <p>The agent decides which data source to use — SQL for hard filters, vector search for capability matching, graph traversal for relationships, or external API for new suppliers.</p>
+  </div>
+</div>
+
+<div class="input-bar">
+  <textarea id="input" rows="1" placeholder="e.g. Find ISO 9001 certified copper cable suppliers in Germany…"></textarea>
+  <button id="send">Send</button>
+</div>
+
+<script>
+// Prompts tagged by which data source they exercise
+const EXAMPLES = [
+  { label: "SQL",          color: "#3b82f6", text: "Find ISO 9001 certified copper cable suppliers in Germany with more than 500 employees" },
+  { label: "SQL",          color: "#3b82f6", text: "Show EU suppliers with ESG score above 0.8 and strong financial health" },
+  { label: "Vector",       color: "#8b5cf6", text: "Find suppliers specialised in offshore wind cable systems or subsea power cables" },
+  { label: "Vector",       color: "#8b5cf6", text: "Find high-voltage insulation cable suppliers for rail traction applications" },
+  { label: "Graph",        color: "#10b981", text: "Which of our suppliers already work with Siemens or BASF?" },
+  { label: "Graph",        color: "#10b981", text: "Are any suppliers connected to sanctioned entities through ownership?" },
+  { label: "External API", color: "#f59e0b", text: "Find new emerging copper cable suppliers in Eastern Europe not in our database" },
+  { label: "Multi-source", color: "#e879f9", text: "Find ISO 9001 certified suppliers in France that also supply aerospace companies" },
+];
+
+function switchTab(id) {
+  document.querySelectorAll('.dpanel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+  document.getElementById('dpanel-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+const SOURCE_CLASS = {
+  "SQL": "SQL", "Vector": "Vector", "Graph": "Graph",
+  "External API": "api", "external_api": "api",
+};
+
+const $ = id => document.getElementById(id);
+let history = [];
+let isLoading = false;
+
+// Build example chips with source label
+EXAMPLES.forEach(ex => {
+  const btn = document.createElement("button");
+  btn.className = "ex-btn";
+  btn.style.borderColor = ex.color + "55";
+  const short = ex.text.length > 52 ? ex.text.slice(0, 52) + "…" : ex.text;
+  btn.innerHTML = `<span style="color:${ex.color};font-weight:700;margin-right:5px;font-size:10px;">${ex.label}</span>${short}`;
+  btn.title = ex.text;
+  btn.onclick = () => { $("input").value = ex.text; send(); };
+  $("examples").appendChild(btn);
+});
+
+// Auto-resize textarea
+$("input").addEventListener("input", function() {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 120) + "px";
+});
+$("input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+});
+$("send").onclick = send;
+
+function send() {
+  const text = $("input").value.trim();
+  if (!text || isLoading) return;
+
+  hideEmpty();
+  appendMsg("user", text, [], []);
+  $("input").value = "";
+  $("input").style.height = "auto";
+  history.push({ role: "user", content: text });
+
+  isLoading = true;
+  $("send").disabled = true;
+  const typingEl = appendTyping();
+
+  fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text, history: history.slice(-6) }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    typingEl.remove();
+    const response = data.response || "No response.";
+    appendMsg("assistant", response, data.sources_used || [], data.tool_calls || []);
+    history.push({ role: "assistant", content: response });
+  })
+  .catch(err => {
+    typingEl.remove();
+    appendMsg("assistant", "Error: " + err, [], []);
+  })
+  .finally(() => {
+    isLoading = false;
+    $("send").disabled = false;
+  });
+}
+
+function hideEmpty() {
+  const el = $("emptyState");
+  if (el) el.remove();
+}
+
+function appendMsg(role, text, sources, toolCalls) {
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + role;
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = role === "user" ? "U" : "🤖";
+
+  const right = document.createElement("div");
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.innerHTML = formatText(text);
+
+  right.appendChild(bubble);
+
+  // Tool call chips (assistant only)
+  if (role === "assistant" && toolCalls.length > 0) {
+    const trace = document.createElement("div");
+    trace.className = "trace";
+
+    const label = document.createElement("div");
+    label.className = "sources-label";
+    label.textContent = "Sources used:";
+    trace.appendChild(label);
+
+    const chips = document.createElement("div");
+    chips.style.display = "flex";
+    chips.style.flexWrap = "wrap";
+    chips.style.gap = "6px";
+    chips.style.marginTop = "4px";
+
+    // Deduplicate by label
+    const seen = new Set();
+    toolCalls.forEach(tc => {
+      const lbl = tc.label || tc.tool || "unknown";
+      if (seen.has(lbl)) return;
+      seen.add(lbl);
+
+      const chip = document.createElement("div");
+      const cls = SOURCE_CLASS[lbl] || "api";
+      chip.className = "tool-chip " + cls;
+      const count = tc.result_count ? ` · ${tc.result_count} results` : "";
+      const summary = tc.input_summary && tc.input_summary !== "—" ? ` (${tc.input_summary})` : "";
+      chip.textContent = lbl + summary + count;
+      chips.appendChild(chip);
+    });
+
+    trace.appendChild(chips);
+    right.appendChild(trace);
+  }
+
+  wrap.appendChild(avatar);
+  wrap.appendChild(right);
+
+  $("messages").appendChild(wrap);
+  $("messages").scrollTop = $("messages").scrollHeight;
+  return wrap;
+}
+
+function appendTyping() {
+  const wrap = document.createElement("div");
+  wrap.className = "msg assistant";
+  wrap.innerHTML = `
+    <div class="avatar">🤖</div>
+    <div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>
+  `;
+  $("messages").appendChild(wrap);
+  $("messages").scrollTop = $("messages").scrollHeight;
+  return wrap;
+}
+
+function formatText(text) {
+  // Minimal markdown: **bold**, *italic*, numbered lists, newlines
+  return text
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/\n/g, "<br>");
+}
+</script>
+</body>
+</html>
