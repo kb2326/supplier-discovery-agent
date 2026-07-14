@@ -2,7 +2,7 @@
 
 A self-contained procurement AI prototype. It turns a free-text buyer request into a **ranked, verified top-5 shortlist of suppliers** — and makes the whole pipeline visible: how many candidates entered and left each stage, why each supplier was dropped or demoted, and a per-criterion score breakdown for every result.
 
-Built as a take-home demo for Shyva AI. The focus is **architecture and reasoning**, not volume of code.
+The focus is **architecture and reasoning**, not volume of code.
 
 ---
 
