@@ -1,4 +1,4 @@
-# Supplier-Discovery Agent — interview demo
+# Supplier-Discovery Agent 
 
 A self-contained procurement AI prototype. It turns a free-text buyer request into a **ranked, verified top-5 shortlist of suppliers** — and makes the whole pipeline visible: how many candidates entered and left each stage, why each supplier was dropped or demoted, and a per-criterion score breakdown for every result.
 
