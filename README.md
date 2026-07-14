@@ -229,3 +229,6 @@ Everything *interesting* runs for real; everything *expensive* is a local mock d
 - **Phase 3:** Knowledge graph if and only if relationship queries prove valuable in the real product. CDC for data freshness. RBAC, human-in-the-loop review, learning-to-rank from buyer feedback.
 
 **Decision gates:** If precision@5 < 0.7 on the gold set → improve retrieval or entity resolution before adding features. If relationship queries are rare → defer the graph indefinitely.
+
+<img width="498" height="278" alt="image" src="https://github.com/user-attachments/assets/462ced10-8b57-475f-9031-a14f00e53e96" />
+
